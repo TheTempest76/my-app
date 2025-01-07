@@ -1,0 +1,76 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id
+  role      UserRole
+  name      String
+  email     String
+  location  Location?
+  posts     FoodPost[] @relation("DonorPosts")
+  requests  Request[]  @relation("ReceiverRequests")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  latitude  Float
+  longitude Float
+  address   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  posts      FoodPost[] 
+}
+
+model FoodPost {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  quantity    String
+  expiryDate  DateTime
+  status      PostStatus @default(AVAILABLE)
+  location    Location  @relation(fields: [locationId], references: [id])
+  locationId  String    
+  donor       User      @relation("DonorPosts", fields: [donorId], references: [id])
+  donorId     String
+  requests    Request[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Request {
+  id          String    @id @default(cuid())
+  post        FoodPost  @relation(fields: [postId], references: [id])
+  postId      String
+  receiver    User      @relation("ReceiverRequests", fields: [receiverId], references: [id])
+  receiverId  String
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum UserRole {
+  DONOR
+  RECEIVER
+}
+
+enum PostStatus {
+  AVAILABLE
+  RESERVED
+  COMPLETED
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}

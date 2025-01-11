@@ -1,9 +1,10 @@
-// components/FoodPostsList.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Location } from "@prisma/client";
 import { calculateDistance } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface FoodPost {
   id: string;
@@ -14,6 +15,7 @@ interface FoodPost {
   status: string;
   location: Location;
   donor: {
+    id: string;
     name: string;
   };
 }
@@ -21,6 +23,8 @@ interface FoodPost {
 export default function FoodPostsList({ userLocation }: { userLocation: Location }) {
   const [posts, setPosts] = useState<FoodPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -46,7 +50,31 @@ export default function FoodPostsList({ userLocation }: { userLocation: Location
       postLocation.longitude
     );
   };
-
+  const handleRequestFood = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/chat/${postId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Chat request failed:', errorData);
+        throw new Error(errorData.error || 'Failed to create/get chat');
+      }
+      
+      const chat = await response.json();
+      console.log("Chat created:", chat);
+      
+      // Navigate to chat page with the post ID
+      router.push(`/chat/${postId}`);
+    } catch (error) {
+      console.error('Error handling food request:', error);
+      // Optional: Add error notification here
+    }
+  };
   if (loading) {
     return (
       <div className="w-full h-64 flex items-center justify-center">
@@ -85,10 +113,11 @@ export default function FoodPostsList({ userLocation }: { userLocation: Location
             </div>
             <div className="mt-4">
               <button
-                onClick={() => {/* Handle request logic */}}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                onClick={() => handleRequestFood(post.id)}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                disabled={post.donor.id === user?.id}
               >
-                Request Food
+                {post.donor.id === user?.id ? "Your Post" : "Request Food"}
               </button>
             </div>
           </div>

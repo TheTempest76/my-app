@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CreateFoodPost from "./createFoodPost";
 import { UserWithLocation } from "@/types";
 import axios from "axios";
@@ -29,6 +30,7 @@ export default function DonorDashboard({ user }: { user: UserWithLocation }) {
   const [posts, setPosts] = useState<FoodPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchPosts = async () => {
     try {
@@ -60,6 +62,10 @@ export default function DonorDashboard({ user }: { user: UserWithLocation }) {
     }
   };
 
+  const handleChatClick = (postId: string) => {
+    router.push(`/chat/${postId}`);
+  };
+
   return (
     <div className="max-w-7xl min-h-screen mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -78,13 +84,13 @@ export default function DonorDashboard({ user }: { user: UserWithLocation }) {
           onClose={() => setShowCreatePost(false)}
           onSuccess={() => {
             setShowCreatePost(false);
-            fetchPosts(); // Refresh posts after creation
+            fetchPosts();
           }}
         />
       )}
-            <h1 className="text-2xl font-bold text-gray-900">Your History</h1>
+      
+      <h1 className="text-2xl font-bold text-gray-900">Your History</h1>
 
-      {/* Posts List */}
       <div className="space-y-6 mt-8">
         {isLoading ? (
           <div className="text-center py-8">
@@ -109,13 +115,23 @@ export default function DonorDashboard({ user }: { user: UserWithLocation }) {
                   <h3 className="text-xl font-semibold">{post.title}</h3>
                   <p className="text-gray-600 mt-1">{post.description}</p>
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${getStatusBadgeColor(
-                    post.status
-                  )}`}
-                >
-                  {post.status.charAt(0) + post.status.slice(1).toLowerCase()}
-                </span>
+                <div className="flex items-center space-x-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${getStatusBadgeColor(
+                      post.status
+                    )}`}
+                  >
+                    {post.status.charAt(0) + post.status.slice(1).toLowerCase()}
+                  </span>
+                  { 
+                    <button
+                      onClick={() => handleChatClick(post.id)}
+                      className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 text-sm transition-colors"
+                    >
+                      Chat
+                    </button>
+}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
